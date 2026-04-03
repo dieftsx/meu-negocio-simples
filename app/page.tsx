@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-
+import { ChatContainer } from '@/components/chat-container'
 
 
 export default async function Home() {
