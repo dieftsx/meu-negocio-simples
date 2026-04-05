@@ -4,7 +4,8 @@
 import { X, TrendingUp, TrendingDown, Calendar, BarChart3, LogOut, Store, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import type { FinancialSummary } from '@/lib/types'
+import { ExportReport } from './export-report'
+import type { FinancialSummary, Transaction } from '@/lib/types'
 
 interface Empresa {
   id: string
@@ -24,6 +25,7 @@ interface SidebarMenuProps {
   monthlySummary: { entradas: number; saidas: number; lucro: number }
   empresa: Empresa | null
   userEmail?: string
+  transactions: Transaction[]
 }
 
 function formatCurrency(value: number) {
@@ -33,7 +35,7 @@ function formatCurrency(value: number) {
   })
 }
 
-export function SidebarMenu({ isOpen, onClose, summary, weeklySummary, monthlySummary, empresa, userEmail }: SidebarMenuProps) {
+export function SidebarMenu({ isOpen, onClose, summary, weeklySummary, monthlySummary, empresa, userEmail, transactions }: SidebarMenuProps) {
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -169,6 +171,12 @@ export function SidebarMenu({ isOpen, onClose, summary, weeklySummary, monthlySu
               <p>Esta semana: {summary.transactionsWeek} registro{summary.transactionsWeek !== 1 ? 's' : ''}</p>
               <p>Este mes: {summary.transactionsMonth} registro{summary.transactionsMonth !== 1 ? 's' : ''}</p>
             </div>
+
+            {/* Exportar Relatório */}
+            <ExportReport
+              transactions={transactions}
+              empresaNome={empresa?.nome_empresa || 'Meu Negocio'}
+            />
 
             {/* Botao Sair */}
             <div className="pt-4">

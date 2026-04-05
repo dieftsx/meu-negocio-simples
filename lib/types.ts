@@ -7,6 +7,8 @@ export interface Transaction {
   value: number
   description: string
   category: string
+  supplier?: string
+  paymentMethod?: string
   createdAt: Date
   synced: boolean
 }
@@ -39,4 +41,6 @@ export interface ParsedTransaction {
   value: number
   description: string
   category: string
+  supplier?: string
+  paymentMethod?: string
 }

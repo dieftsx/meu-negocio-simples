@@ -1,47 +1,94 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import type { Transaction, FinancialSummary } from '@/lib/types'
 
-const STORAGE_KEY = 'meu-negocio-transactions'
-
-export function useTransactions() {
+export function useTransactions(userId: string) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const supabase = createClient()
 
+  // Carrega transações do Supabase na inicialização
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored)
-        const withDates = parsed.map((t: Transaction) => ({
-          ...t,
-          createdAt: new Date(t.createdAt)
-        }))
-        setTransactions(withDates)
-      } catch {
+    if (!userId) return
+
+    async function loadTransactions() {
+      const { data, error } = await supabase
+        .from('transacoes')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Erro ao carregar transações:', error)
         setTransactions([])
+      } else {
+        const mapped = (data || []).map((row: Record<string, unknown>) => ({
+          id: row.id as string,
+          type: row.type as Transaction['type'],
+          value: Number(row.value),
+          description: row.description as string,
+          category: (row.category as string) || '',
+          createdAt: new Date(row.created_at as string),
+          synced: true,
+        }))
+        setTransactions(mapped)
       }
+      setIsLoaded(true)
     }
-    setIsLoaded(true)
-  }, [])
 
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions))
-    }
-  }, [transactions, isLoaded])
+    loadTransactions()
+  }, [userId, supabase])
 
   const addTransaction = useCallback((transaction: Omit<Transaction, 'id' | 'createdAt' | 'synced'>) => {
+    const tempId = crypto.randomUUID()
+    const now = new Date()
+
+    // Atualização otimista do state local
     const newTransaction: Transaction = {
       ...transaction,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      synced: false
+      id: tempId,
+      createdAt: now,
+      synced: false,
     }
     setTransactions(prev => [newTransaction, ...prev])
+
+    // Insere no Supabase em background
+    supabase
+      .from('transacoes')
+      .insert({
+        user_id: userId,
+        type: transaction.type,
+        value: transaction.value,
+        description: transaction.description,
+        category: transaction.category,
+      })
+      .select()
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Erro ao salvar transação:', error)
+          // Marca como não sincronizada mas mantém no state
+        } else if (data) {
+          // Atualiza com o ID real do Supabase
+          setTransactions(prev =>
+            prev.map(t =>
+              t.id === tempId
+                ? {
+                    ...t,
+                    id: data.id as string,
+                    createdAt: new Date(data.created_at as string),
+                    synced: true,
+                  }
+                : t
+            )
+          )
+        }
+      })
+
     return newTransaction
-  }, [])
+  }, [userId, supabase])
 
   const getSummary = useCallback((): FinancialSummary => {
     const now = new Date()
@@ -114,4 +161,3 @@ export function useTransactions() {
     getMonthlySummary
   }
 }
-

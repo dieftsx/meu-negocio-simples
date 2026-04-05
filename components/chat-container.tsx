@@ -32,7 +32,7 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
   const [quickActionText, setQuickActionText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const { addTransaction, getSummary, getWeeklySummary, getMonthlySummary, isLoaded } = useTransactions()
+  const { transactions, addTransaction, getSummary, getWeeklySummary, getMonthlySummary, isLoaded } = useTransactions(user.id)
 
   const summary = getSummary()
   const weeklySummary = getWeeklySummary()
@@ -75,7 +75,9 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
         type: parsed.type,
         value: parsed.value,
         description: parsed.description,
-        category: parsed.category
+        category: parsed.category,
+        supplier: parsed.supplier,
+        paymentMethod: parsed.paymentMethod,
       })
 
       const currentSummary = getSummary()
@@ -137,6 +139,7 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
         monthlySummary={monthlySummary}
         empresa={empresa}
         userEmail={user.email}
+        transactions={transactions}
       />
 
       <main className="flex-1 overflow-y-auto">
