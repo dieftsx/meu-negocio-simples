@@ -1,51 +1,58 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { Store, Loader2 } from 'lucide-react'
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Store, Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
-      if (error) throw error
-      router.push('/')
-      router.refresh()
+      });
+      if (error) throw error;
+      router.push("/");
+      router.refresh();
     } catch (error: unknown) {
       if (error instanceof Error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Email ou senha incorretos')
-        } else if (error.message.includes('Email not confirmed')) {
-          setError('Confirme seu email antes de entrar')
+        if (error.message.includes("Invalid login credentials")) {
+          setError("Email ou senha incorretos");
+        } else if (error.message.includes("Email not confirmed")) {
+          setError("Confirme seu email antes de entrar");
         } else {
-          setError('Erro ao fazer login. Tente novamente.')
+          setError("Erro ao fazer login. Tente novamente.");
         }
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center bg-background p-4">
@@ -56,7 +63,9 @@ export default function LoginPage() {
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
               <Store className="h-8 w-8 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Meu Negocio Simples</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              Meu Negocio Simples
+            </h1>
             <p className="text-sm text-muted-foreground text-center">
               Controle financeiro simples como mandar mensagem
             </p>
@@ -64,7 +73,9 @@ export default function LoginPage() {
 
           <Card className="w-full border-border shadow-lg">
             <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-xl text-center">Entrar na sua conta</CardTitle>
+              <CardTitle className="text-xl text-center">
+                Entrar na sua conta
+              </CardTitle>
               <CardDescription className="text-center">
                 Digite seu email e senha para acessar
               </CardDescription>
@@ -87,16 +98,30 @@ export default function LoginPage() {
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="password">Senha</FieldLabel>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Digite sua senha"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 text-base"
-                      autoComplete="current-password"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Digite sua senha"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-12 text-base"
+                        autoComplete="current-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
                   </Field>
 
                   {error && (
@@ -116,14 +141,14 @@ export default function LoginPage() {
                         Entrando...
                       </>
                     ) : (
-                      'Entrar'
+                      "Entrar"
                     )}
                   </Button>
                 </FieldGroup>
 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
-                    Ainda nao tem conta?{' '}
+                    Ainda nao tem conta?{" "}
                     <Link
                       href="/auth/cadastro"
                       className="font-medium text-primary hover:underline"
@@ -138,5 +163,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
