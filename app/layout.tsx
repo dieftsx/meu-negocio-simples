@@ -13,25 +13,6 @@ export const metadata: Metadata = {
   title: "Meu Negocio Simples - Controle suas financas do jeito facil",
   description:
     "Controle financeiro simples como mandar uma mensagem. Feito para pequenos empreendedores.",
-  generator: "v0.app",
-  manifest: "/manifest.json",
-  icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
-  },
 };
 
 export const viewport: Viewport = {
@@ -49,7 +30,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body
+        className={`${inter.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
