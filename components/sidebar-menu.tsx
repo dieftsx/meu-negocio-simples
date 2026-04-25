@@ -41,7 +41,7 @@ export function SidebarMenu({ isOpen, onClose, summary, weeklySummary, monthlySu
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/auth/login')
+    router.push('/landing')
     router.refresh()
   }
 
