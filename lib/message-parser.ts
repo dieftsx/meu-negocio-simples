@@ -38,23 +38,49 @@ const PAYMENT_METHODS: Record<string, string[]> = {
 }
 
 function extractValue(text: string): number | null {
+  // Remove R$ e a palavra reais para facilitar a extração do número
   const cleanText = text.toLowerCase().replace(/r\$/g, '').replace(/reais/g, '')
 
   const patterns = [
-    /(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)/,
-    /(\d+(?:,\d{2})?)/,
-    /(\d+(?:\.\d{2})?)/
+    // Milhares com ponto e decimal com vírgula: 1.234,56 ou 1.234,5
+    /(\d{1,3}(?:\.\d{3})+,\d{1,2})/,
+    // Decimal com vírgula: 1234,56 ou 1234,5
+    /(\d+,\d{1,2})/,
+    // Decimal com ponto: 1234.56 ou 1234.5
+    /(\d+\.\d{1,2})/,
+    // Milhares com ponto (sem decimal): 1.234
+    /(\d{1,3}(?:\.\d{3})+)/,
+    // Apenas números: 1234
+    /(\d+)/
   ]
 
   for (const pattern of patterns) {
     const match = cleanText.match(pattern)
     if (match) {
       let valueStr = match[1]
+      
+      // Se tem ponto e vírgula, o ponto é milhar e a vírgula é decimal
       if (valueStr.includes('.') && valueStr.includes(',')) {
         valueStr = valueStr.replace(/\./g, '').replace(',', '.')
-      } else if (valueStr.includes(',')) {
+      } 
+      // Se tem apenas vírgula, tratamos como decimal
+      else if (valueStr.includes(',')) {
         valueStr = valueStr.replace(',', '.')
       }
+      // Se tem apenas ponto:
+      else if (valueStr.includes('.')) {
+        const parts = valueStr.split('.')
+        const lastPart = parts[parts.length - 1]
+        // Se a última parte tem 3 dígitos, provavelmente é separador de milhar (ex: 1.000)
+        // A menos que o padrão que casou seja especificamente o de decimal com ponto (\d+\.\d{1,2})
+        // mas como ordenamos os padrões, se casou no padrão de decimal (\d+\.\d{1,2}) ele vai entrar aqui
+        // Então verificamos se o match veio do pattern de milhares ou se realmente parece milhar
+        if (lastPart.length === 3 && patterns.indexOf(pattern) === 3) {
+          valueStr = valueStr.replace(/\./g, '')
+        }
+        // Se for 1 ou 2 dígitos, ou se o padrão for o decimal, mantemos o ponto para o parseFloat
+      }
+      
       const value = parseFloat(valueStr)
       if (!isNaN(value) && value > 0) {
         return value

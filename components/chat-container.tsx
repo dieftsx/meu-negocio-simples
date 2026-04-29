@@ -28,6 +28,39 @@ interface ChatContainerProps {
 
 export function ChatContainer({ user, empresa }: ChatContainerProps) {
   const [messages, setMessages] = useState<Message[]>([])
+  const [hasLoadedPersistent, setHasLoadedPersistent] = useState(false)
+
+  // Carregar mensagens do localStorage na inicialização
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`chat_messages_${user.id}`)
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          const mapped = parsed.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp),
+            transaction: m.transaction ? {
+              ...m.transaction,
+              createdAt: new Date(m.transaction.createdAt)
+            } : undefined
+          }))
+          setMessages(mapped)
+        } catch (e) {
+          console.error('Erro ao carregar histórico de mensagens:', e)
+        }
+      }
+      setHasLoadedPersistent(true)
+    }
+  }, [user.id])
+
+  // Salvar mensagens no localStorage sempre que mudarem
+  useEffect(() => {
+    if (hasLoadedPersistent && typeof window !== 'undefined') {
+      localStorage.setItem(`chat_messages_${user.id}`, JSON.stringify(messages))
+    }
+  }, [messages, user.id, hasLoadedPersistent])
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [quickActionText, setQuickActionText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
