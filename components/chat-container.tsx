@@ -26,6 +26,21 @@ interface ChatContainerProps {
   empresa: Empresa | null
 }
 
+function formatDateHeader(date: Date) {
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  if (date.toDateString() === today.toDateString()) return 'Hoje'
+  if (date.toDateString() === yesterday.toDateString()) return 'Ontem'
+  
+  return date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+  })
+}
+
 export function ChatContainer({ user, empresa }: ChatContainerProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [hasLoadedPersistent, setHasLoadedPersistent] = useState(false)
@@ -172,6 +187,7 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
         monthlySummary={monthlySummary}
         empresa={empresa}
         userEmail={user.email}
+        userId={user.id}
         transactions={transactions}
       />
 
@@ -180,9 +196,23 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
           <WelcomeMessage />
         ) : (
           <div className="p-4">
-            {messages.map(message => (
-              <ChatMessage key={message.id} message={message} />
-            ))}
+            {messages.map((message, index) => {
+              const showHeader = index === 0 || 
+                new Date(messages[index - 1].timestamp).toDateString() !== new Date(message.timestamp).toDateString()
+              
+              return (
+                <div key={message.id}>
+                  {showHeader && (
+                    <div className="flex justify-center my-6">
+                      <span className="bg-secondary/80 backdrop-blur-sm text-secondary-foreground text-[11px] font-bold px-4 py-1.5 rounded-lg shadow-sm border border-border/50 uppercase tracking-wider">
+                        {formatDateHeader(message.timestamp)}
+                      </span>
+                    </div>
+                  )}
+                  <ChatMessage message={message} />
+                </div>
+              )
+            })}
             <div ref={messagesEndRef} />
           </div>
         )}

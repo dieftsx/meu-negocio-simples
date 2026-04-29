@@ -25,6 +25,7 @@ interface SidebarMenuProps {
   monthlySummary: { entradas: number; saidas: number; lucro: number }
   empresa: Empresa | null
   userEmail?: string
+  userId: string
   transactions: Transaction[]
 }
 
@@ -35,12 +36,18 @@ function formatCurrency(value: number) {
   })
 }
 
-export function SidebarMenu({ isOpen, onClose, summary, weeklySummary, monthlySummary, empresa, userEmail, transactions }: SidebarMenuProps) {
+export function SidebarMenu({ isOpen, onClose, summary, weeklySummary, monthlySummary, empresa, userEmail, userId, transactions }: SidebarMenuProps) {
   const router = useRouter()
 
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
+    
+    // Limpa o chat ao deslogar
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(`chat_messages_${userId}`)
+    }
+
     router.push('/landing')
     router.refresh()
   }
