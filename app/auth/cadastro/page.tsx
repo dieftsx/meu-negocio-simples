@@ -284,7 +284,8 @@ export default function CadastroPage() {
         type="button"
         onClick={handleGoogleLogin}
         className="w-full mb-4 h-12 text-base font-medium"
-        disabled={isLoading}
+        //disabled={isLoading}
+        disabled={true}
       >
         {isLoading ? (
           <>
@@ -294,6 +295,7 @@ export default function CadastroPage() {
         ) : (
           "Cadastrar com Google"
         )}
+       <span className='text-xs font-normal bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full'>Em breve</span>
       </Button>
                     </FieldGroup>
                 ) : (
