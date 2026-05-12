@@ -36,6 +36,19 @@ const TIPOS_NEGOCIO = [
 ];
 
 export default function CadastroPage() {
+  
+  const handleGoogleLogin = async () => {
+    setIsLoading(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOauth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    })
+    if (error) setError(error.message)
+      setIsLoading(false)
+  }
+
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     nomeResponsavel: "",
@@ -266,7 +279,23 @@ export default function CadastroPage() {
                     >
                       Continuar
                     </Button>
-                  </FieldGroup>
+       {/* Google OAuth Button */}
+      <Button
+        type="button"
+        onClick={handleGoogleLogin}
+        className="w-full mb-4 h-12 text-base font-medium"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Entrando com Google...
+          </>
+        ) : (
+          "Cadastrar com Google"
+        )}
+      </Button>
+                    </FieldGroup>
                 ) : (
                   <FieldGroup>
                     <Button
@@ -369,7 +398,7 @@ export default function CadastroPage() {
                       ) : (
                         "Criar minha conta"
                       )}
-                    </Button>
+                    </Button>    
                   </FieldGroup>
                 )}
 
