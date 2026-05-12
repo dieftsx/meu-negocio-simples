@@ -29,9 +29,7 @@ export async function GET(request:Request) {
           catch (error) {
             console.log(error)
           }
-        }
-      }
-    )
+        )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if(!error){
