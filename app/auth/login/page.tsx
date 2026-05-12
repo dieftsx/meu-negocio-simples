@@ -15,9 +15,19 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Store, Loader2, Eye, EyeOff } from "lucide-react";
+import { Store, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback`},
+    });
+    if (error) setError(error.message);
+    setIsLoading(false);
+  };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +66,17 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+     <div className="w-full max-w-md">
+        <Button 
+        variant='ghost'
+        asChild
+        className='w-fit pl-0 hover:bg-transparent hover:text-primary mb-6'
+        >
+        <Link href='/'>
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Voltar para o Início
+        </Link>
+        </Button>
         <div className="flex flex-col items-center gap-6">
           {/* Logo */}
           <div className="flex flex-col items-center gap-2">
@@ -144,6 +164,26 @@ export default function LoginPage() {
                       "Entrar"
                     )}
                   </Button>
+      {/* Google OAuth Button */}
+      <Button
+        type="button"
+        onClick={handleGoogleLogin}
+        className="w-full mb-4 h-12 text-base font-medium"
+        //disabled={isLoading}
+        disabled={true}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Entrando com Google...
+          </>
+        ) : (
+          "Entrar com Google"
+        
+        )}
+               <span className='text-xs font-normal bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full'>Em breve</span>
+      </Button>
+ 
                 </FieldGroup>
 
                 <div className="mt-6 text-center">
