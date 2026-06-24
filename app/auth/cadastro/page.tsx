@@ -40,7 +40,7 @@ export default function CadastroPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOauth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
     })
