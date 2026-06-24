@@ -1,7 +1,8 @@
 
 'use client'
 
-import { X, TrendingUp, TrendingDown, Calendar, BarChart3, LogOut, Store, User } from 'lucide-react'
+import { useState } from 'react'
+import { X, TrendingUp, TrendingDown, Calendar, BarChart3, LogOut, Store, User, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { ExportReport } from './export-report'
@@ -27,6 +28,7 @@ interface SidebarMenuProps {
   userEmail?: string
   userId: string
   transactions: Transaction[]
+  onReset: () => Promise<void>
 }
 
 function formatCurrency(value: number) {
@@ -36,8 +38,10 @@ function formatCurrency(value: number) {
   })
 }
 
-export function SidebarMenu({ isOpen, onClose, summary, weeklySummary, monthlySummary, empresa, userEmail, userId, transactions }: SidebarMenuProps) {
+export function SidebarMenu({ isOpen, onClose, summary, weeklySummary, monthlySummary, empresa, userEmail, userId, transactions, onReset }: SidebarMenuProps) {
   const router = useRouter()
+  const [isConfirming, setIsConfirming] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -184,6 +188,47 @@ export function SidebarMenu({ isOpen, onClose, summary, weeklySummary, monthlySu
               transactions={transactions}
               empresaNome={empresa?.nome_empresa || 'Meu Negocio'}
             />
+
+            {/* Limpar dados */}
+            <div className="pt-2">
+              {!isConfirming ? (
+                <button
+                  onClick={() => setIsConfirming(true)}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20 transition-colors"
+                  aria-label="Limpar todas as mensagens e saldos"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span className="font-medium">Limpar mensagens e saldos</span>
+                </button>
+              ) : (
+                <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 space-y-3">
+                  <p className="text-sm text-center text-destructive font-medium">
+                    ⚠️ Isso apaga todo o histórico e não pode ser desfeito. Confirma?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsConfirming(false)}
+                      className="flex-1 py-2 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setIsResetting(true)
+                        await onReset()
+                        setIsConfirming(false)
+                        setIsResetting(false)
+                        onClose()
+                      }}
+                      disabled={isResetting}
+                      className="flex-1 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors disabled:opacity-60"
+                    >
+                      {isResetting ? 'Limpando...' : 'Sim, limpar tudo'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Botao Sair */}
             <div className="pt-4">

@@ -269,7 +269,7 @@ export default function CadastroPage() {
                   </FieldGroup>
                 ) : (
                   <FieldGroup>
-                    <Button
+                 <Button
                       type="button"
                       variant="ghost"
                       size="sm"

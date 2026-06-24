@@ -1,164 +1,198 @@
-'use client'
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { ChatHeader } from './chat-header'
-import { ChatMessage } from './chat-message'
-import { QuickActions } from './quick-actions'
-import { SidebarMenu } from './sidebar-menu'
-import { WelcomeMessage } from './welcome-message'
-import { useTransactions } from '@/hooks/use-transactions'
-import { parseMessage, generateResponse, generateHelpResponse, isGreeting } from '@/lib/message-parser'
-import type { Message } from '@/lib/types'
-import type { User } from '@supabase/supabase-js'
+import { useState, useRef, useEffect, useCallback } from "react";
+import { ChatHeader } from "./chat-header";
+import { ChatMessage } from "./chat-message";
+import { QuickActions } from "./quick-actions";
+import { SidebarMenu } from "./sidebar-menu";
+import { WelcomeMessage } from "./welcome-message";
+import { useTransactions } from "@/hooks/use-transactions";
+import {
+  parseMessage,
+  generateResponse,
+  generateHelpResponse,
+  isGreeting,
+} from "@/lib/message-parser";
+import type { Message } from "@/lib/types";
+import type { User } from "@supabase/supabase-js";
 
 interface Empresa {
-  id: string
-  user_id: string
-  nome_empresa: string
-  nome_responsavel: string
-  telefone?: string
-  tipo_negocio?: string
-  created_at: string
+  id: string;
+  user_id: string;
+  nome_empresa: string;
+  nome_responsavel: string;
+  telefone?: string;
+  tipo_negocio?: string;
+  created_at: string;
 }
 
 interface ChatContainerProps {
-  user: User
-  empresa: Empresa | null
+  user: User;
+  empresa: Empresa | null;
 }
 
 function formatDateHeader(date: Date) {
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
 
-  if (date.toDateString() === today.toDateString()) return 'Hoje'
-  if (date.toDateString() === yesterday.toDateString()) return 'Ontem'
-  
-  return date.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
-  })
+  if (date.toDateString() === today.toDateString()) return "Hoje";
+  if (date.toDateString() === yesterday.toDateString()) return "Ontem";
+
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
+  });
 }
 
 export function ChatContainer({ user, empresa }: ChatContainerProps) {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [hasLoadedPersistent, setHasLoadedPersistent] = useState(false)
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [hasLoadedPersistent, setHasLoadedPersistent] = useState(false);
 
   // Carregar mensagens do localStorage na inicialização
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`chat_messages_${user.id}`)
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(`chat_messages_${user.id}`);
       if (saved) {
         try {
-          const parsed = JSON.parse(saved)
+          const parsed = JSON.parse(saved);
           const mapped = parsed.map((m: any) => ({
             ...m,
             timestamp: new Date(m.timestamp),
-            transaction: m.transaction ? {
-              ...m.transaction,
-              createdAt: new Date(m.transaction.createdAt)
-            } : undefined
-          }))
-          setMessages(mapped)
+            transaction: m.transaction
+              ? {
+                  ...m.transaction,
+                  createdAt: new Date(m.transaction.createdAt),
+                }
+              : undefined,
+          }));
+          setMessages(mapped);
         } catch (e) {
-          console.error('Erro ao carregar histórico de mensagens:', e)
+          console.error("Erro ao carregar histórico de mensagens:", e);
         }
       }
-      setHasLoadedPersistent(true)
+      setHasLoadedPersistent(true);
     }
-  }, [user.id])
+  }, [user.id]);
 
   // Salvar mensagens no localStorage sempre que mudarem
   useEffect(() => {
-    if (hasLoadedPersistent && typeof window !== 'undefined') {
-      localStorage.setItem(`chat_messages_${user.id}`, JSON.stringify(messages))
+    if (hasLoadedPersistent && typeof window !== "undefined") {
+      localStorage.setItem(
+        `chat_messages_${user.id}`,
+        JSON.stringify(messages),
+      );
     }
-  }, [messages, user.id, hasLoadedPersistent])
+  }, [messages, user.id, hasLoadedPersistent]);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [quickActionText, setQuickActionText] = useState('')
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [quickActionText, setQuickActionText] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { transactions, addTransaction, getSummary, getWeeklySummary, getMonthlySummary, isLoaded } = useTransactions(user.id)
+  const {
+    transactions,
+    addTransaction,
+    getSummary,
+    getWeeklySummary,
+    getMonthlySummary,
+    isLoaded,
+    resetData,
+  } = useTransactions(user.id);
 
-  const summary = getSummary()
-  const weeklySummary = getWeeklySummary()
-  const monthlySummary = getMonthlySummary()
+  const summary = getSummary();
+  const weeklySummary = getWeeklySummary();
+  const monthlySummary = getMonthlySummary();
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, scrollToBottom])
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
-  const handleSend = useCallback((text: string) => {
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      content: text,
-      sender: 'user',
-      timestamp: new Date()
-    }
-    setMessages(prev => [...prev, userMessage])
-
-    if (isGreeting(text)) {
-      const helpMessage: Message = {
+  const handleSend = useCallback(
+    (text: string) => {
+      const userMessage: Message = {
         id: crypto.randomUUID(),
-        content: generateHelpResponse(),
-        sender: 'assistant',
-        timestamp: new Date()
-      }
-      setTimeout(() => {
-        setMessages(prev => [...prev, helpMessage])
-      }, 500)
-      return
-    }
-
-    const parsed = parseMessage(text)
-
-    if (parsed) {
-      const transaction = addTransaction({
-        type: parsed.type,
-        value: parsed.value,
-        description: parsed.description,
-        category: parsed.category,
-        supplier: parsed.supplier,
-        paymentMethod: parsed.paymentMethod,
-      })
-
-      const currentSummary = getSummary()
-      const responseText = generateResponse(parsed, { saldo: currentSummary.saldo })
-
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        content: responseText,
-        sender: 'assistant',
+        content: text,
+        sender: "user",
         timestamp: new Date(),
-        transaction
+      };
+      setMessages((prev) => [...prev, userMessage]);
+
+      if (isGreeting(text)) {
+        const helpMessage: Message = {
+          id: crypto.randomUUID(),
+          content: generateHelpResponse(),
+          sender: "assistant",
+          timestamp: new Date(),
+        };
+        setTimeout(() => {
+          setMessages((prev) => [...prev, helpMessage]);
+        }, 500);
+        return;
       }
 
-      setTimeout(() => {
-        setMessages(prev => [...prev, assistantMessage])
-      }, 500)
-    } else {
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        content: 'Nao entendi. Tenta escrever assim:\n\n"Recebi 50 reais"\n"Paguei 30 de conta"\n\nPrecisa ter o valor em reais.',
-        sender: 'assistant',
-        timestamp: new Date()
-      }
+      const parsed = parseMessage(text);
 
-      setTimeout(() => {
-        setMessages(prev => [...prev, errorMessage])
-      }, 500)
-    }
-  }, [addTransaction, getSummary])
+      if (parsed) {
+        const transaction = addTransaction({
+          type: parsed.type,
+          value: parsed.value,
+          description: parsed.description,
+          category: parsed.category,
+          supplier: parsed.supplier,
+          paymentMethod: parsed.paymentMethod,
+        });
+
+        const currentSummary = getSummary();
+        const responseText = generateResponse(parsed, {
+          saldo: currentSummary.saldo,
+        });
+
+        const assistantMessage: Message = {
+          id: crypto.randomUUID(),
+          content: responseText,
+          sender: "assistant",
+          timestamp: new Date(),
+          transaction,
+        };
+
+        setTimeout(() => {
+          setMessages((prev) => [...prev, assistantMessage]);
+        }, 500);
+      } else {
+        const errorMessage: Message = {
+          id: crypto.randomUUID(),
+          content:
+            'Nao entendi. Tenta escrever assim:\n\n"Recebi 50 reais"\n"Paguei 30 de conta"\n\nPrecisa ter o valor em reais.',
+          sender: "assistant",
+          timestamp: new Date(),
+        };
+
+        setTimeout(() => {
+          setMessages((prev) => [...prev, errorMessage]);
+        }, 500);
+      }
+    },
+    [addTransaction, getSummary],
+  );
 
   const handleQuickAction = useCallback((text: string) => {
-    setQuickActionText(text)
-  }, [])
+    setQuickActionText(text);
+  }, []);
+
+  const handleReset = useCallback(async () => {
+    // Limpa mensagens do chat
+    setMessages([]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(`chat_messages_${user.id}`);
+    }
+    // Deleta transações no Supabase
+    await resetData();
+  }, [resetData, user.id]);
 
   if (!isLoaded) {
     return (
@@ -168,7 +202,7 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
           <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -176,7 +210,7 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
       <ChatHeader
         summary={summary}
         onMenuClick={() => setIsSidebarOpen(true)}
-        empresaNome={empresa?.nome_empresa || 'Meu Negocio'}
+        empresaNome={empresa?.nome_empresa || "Meu Negocio"}
       />
 
       <SidebarMenu
@@ -189,6 +223,7 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
         userEmail={user.email}
         userId={user.id}
         transactions={transactions}
+        onReset={handleReset}
       />
 
       <main className="flex-1 overflow-y-auto">
@@ -197,9 +232,11 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
         ) : (
           <div className="p-4">
             {messages.map((message, index) => {
-              const showHeader = index === 0 || 
-                new Date(messages[index - 1].timestamp).toDateString() !== new Date(message.timestamp).toDateString()
-              
+              const showHeader =
+                index === 0 ||
+                new Date(messages[index - 1].timestamp).toDateString() !==
+                  new Date(message.timestamp).toDateString();
+
               return (
                 <div key={message.id}>
                   {showHeader && (
@@ -211,7 +248,7 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
                   )}
                   <ChatMessage message={message} />
                 </div>
-              )
+              );
             })}
             <div ref={messagesEndRef} />
           </div>
@@ -223,38 +260,42 @@ export function ChatContainer({ user, empresa }: ChatContainerProps) {
       <ChatInputWithQuickAction
         onSend={handleSend}
         quickActionText={quickActionText}
-        onQuickActionUsed={() => setQuickActionText('')}
+        onQuickActionUsed={() => setQuickActionText("")}
       />
     </div>
-  )
+  );
 }
 
 interface ChatInputWithQuickActionProps {
-  onSend: (message: string) => void
-  quickActionText: string
-  onQuickActionUsed: () => void
+  onSend: (message: string) => void;
+  quickActionText: string;
+  onQuickActionUsed: () => void;
 }
 
-function ChatInputWithQuickAction({ onSend, quickActionText, onQuickActionUsed }: ChatInputWithQuickActionProps) {
-  const [message, setMessage] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+function ChatInputWithQuickAction({
+  onSend,
+  quickActionText,
+  onQuickActionUsed,
+}: ChatInputWithQuickActionProps) {
+  const [message, setMessage] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (quickActionText) {
-      setMessage(quickActionText)
-      onQuickActionUsed()
-      inputRef.current?.focus()
+      setMessage(quickActionText);
+      onQuickActionUsed();
+      inputRef.current?.focus();
     }
-  }, [quickActionText, onQuickActionUsed])
+  }, [quickActionText, onQuickActionUsed]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const trimmed = message.trim()
+    e.preventDefault();
+    const trimmed = message.trim();
     if (trimmed) {
-      onSend(trimmed)
-      setMessage('')
+      onSend(trimmed);
+      setMessage("");
     }
-  }
+  };
 
   return (
     <form
@@ -296,5 +337,5 @@ function ChatInputWithQuickAction({ onSend, quickActionText, onQuickActionUsed }
         Dica: Escreva como se estivesse mandando mensagem
       </p>
     </form>
-  )
+  );
 }
