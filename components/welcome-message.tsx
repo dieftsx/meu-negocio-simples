@@ -1,7 +1,6 @@
+"use client";
 
-'use client'
-
-import { Wallet, MessageCircle, TrendingUp } from 'lucide-react'
+import { Wallet, MessageCircle, TrendingUp } from "lucide-react";
 
 export function WelcomeMessage() {
   return (
@@ -15,7 +14,8 @@ export function WelcomeMessage() {
       </h2>
 
       <p className="text-muted-foreground mb-8 max-w-sm">
-        Controle suas financas de forma simples, como se estivesse mandando mensagem.
+        Controle suas financas de forma simples, como se estivesse mandando
+        mensagem.
       </p>
 
       <div className="space-y-4 w-full max-w-sm">
@@ -26,7 +26,7 @@ export function WelcomeMessage() {
           <div>
             <p className="font-medium text-foreground">Escreva naturalmente</p>
             <p className="text-sm text-muted-foreground">
-              {"\"Recebi 50 reais de uma venda\""}
+              {'"Recebi 50 reais de uma venda"'}
             </p>
           </div>
         </div>
@@ -38,7 +38,7 @@ export function WelcomeMessage() {
           <div>
             <p className="font-medium text-foreground">Registre despesas</p>
             <p className="text-sm text-muted-foreground">
-              {"\"Paguei 30 pro fornecedor\""}
+              {'"Paguei 30 pro fornecedor"'}
             </p>
           </div>
         </div>
@@ -56,5 +56,5 @@ export function WelcomeMessage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

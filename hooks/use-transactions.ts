@@ -152,12 +152,28 @@ export function useTransactions(userId: string) {
     return { entradas, saidas, lucro: entradas - saidas }
   }, [transactions])
 
+  const resetData = useCallback(async () => {
+    // Limpa estado local imediatamente (otimista)
+    setTransactions([])
+
+    // Deleta todas as transações do usuário no Supabase
+    const { error } = await supabase
+      .from('transacoes')
+      .delete()
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Erro ao resetar transações:', error)
+    }
+  }, [userId, supabase])
+
   return {
     transactions,
     isLoaded,
     addTransaction,
     getSummary,
     getWeeklySummary,
-    getMonthlySummary
+    getMonthlySummary,
+    resetData,
   }
 }
